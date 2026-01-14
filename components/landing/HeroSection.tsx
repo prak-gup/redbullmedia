@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -13,6 +13,7 @@ interface HeroSectionProps {
 export default function HeroSection({ onLaunchOptimizer }: HeroSectionProps) {
   const videoSectionRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const [isMuted, setIsMuted] = useState(true) // Start muted to allow autoplay
 
   useEffect(() => {
     const videoSection = videoSectionRef.current
@@ -54,6 +55,9 @@ export default function HeroSection({ onLaunchOptimizer }: HeroSectionProps) {
       })
     }
 
+    // Set mute state
+    video.muted = isMuted
+
     // Start video playback
     video.play().catch(() => {
       // Autoplay blocked, user interaction required
@@ -69,7 +73,22 @@ export default function HeroSection({ onLaunchOptimizer }: HeroSectionProps) {
         }
       })
     }
-  }, [])
+  }, [isMuted])
+
+  // Update video mute state when isMuted changes
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = isMuted
+    }
+  }, [isMuted])
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      const newMutedState = !isMuted
+      videoRef.current.muted = newMutedState
+      setIsMuted(newMutedState)
+    }
+  }
 
   return (
     <>
@@ -82,7 +101,6 @@ export default function HeroSection({ onLaunchOptimizer }: HeroSectionProps) {
           ref={videoRef}
           className="h-full w-full object-cover"
           playsInline
-          muted
           loop
           preload="auto"
         >
@@ -92,6 +110,40 @@ export default function HeroSection({ onLaunchOptimizer }: HeroSectionProps) {
           />
           Your browser does not support the video tag.
         </video>
+
+        {/* Mute/Unmute Button */}
+        <button
+          onClick={toggleMute}
+          className="absolute top-4 right-4 z-20 flex items-center justify-center w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 text-white transition-all hover:bg-black/70 active:scale-95 sm:w-14 sm:h-14"
+          aria-label={isMuted ? 'Unmute video' : 'Mute video'}
+        >
+          {isMuted ? (
+            <svg
+              className="w-6 h-6 sm:w-7 sm:h-7"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              <path d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+            </svg>
+          ) : (
+            <svg
+              className="w-6 h-6 sm:w-7 sm:h-7"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 14.142M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            </svg>
+          )}
+        </button>
 
         {/* CTA at bottom of video */}
         <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/90 via-black/50 to-transparent px-4 pb-6 pt-16 sm:px-6 sm:pb-12 sm:pt-24">
