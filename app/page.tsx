@@ -6,13 +6,15 @@ import { useBaselineMetrics, useOptimizedMetrics } from '@/hooks/useOptimization
 import SummaryTab from '@/components/tabs/SummaryTab'
 import DigitalTab from '@/components/tabs/DigitalTab'
 import TVTab from '@/components/tabs/TVTab'
+import OptimalPlanTab from '@/components/tabs/OptimalPlanTab'
 
 export default function Home() {
+  // Optimal Plan Defaults: 5.28 Cr total, 81:19 YouTube/JHS, 15% intensity, 70% threshold
   const [tvDigitalSplit, setTvDigitalSplit] = useState(79)
-  const [ytJhsSplit, setYtJhsSplit] = useState(60)
+  const [ytJhsSplit, setYtJhsSplit] = useState(81) // Optimal: 81% YouTube
   const [selectedTVRegion, setSelectedTVRegion] = useState<RegionCode>('HSM')
-  const [tvIntensity, setTvIntensity] = useState(15)
-  const [tvThreshold, setTvThreshold] = useState(70)
+  const [tvIntensity, setTvIntensity] = useState(15) // Optimal: 15% intensity
+  const [tvThreshold, setTvThreshold] = useState(70) // Optimal: 70% protection threshold
   const [hasOptimized, setHasOptimized] = useState(false)
   const [activeTab, setActiveTab] = useState<TabId>('summary')
   
@@ -63,6 +65,7 @@ export default function Home() {
               { id: 'summary' as TabId, label: '📊 Summary' },
               { id: 'digital' as TabId, label: '🌐 Digital' },
               { id: 'tv' as TabId, label: '📺 TV' },
+              { id: 'optimal' as TabId, label: '🎯 Optimal Plan' },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -124,6 +127,12 @@ export default function Home() {
             optimizedMetrics={optimizedMetrics}
             selectedTVRegion={selectedTVRegion}
             onRegionChange={setSelectedTVRegion}
+          />
+        )}
+        
+        {activeTab === 'optimal' && (
+          <OptimalPlanTab
+            baselineMetrics={baselineMetrics}
           />
         )}
         

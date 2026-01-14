@@ -23,36 +23,70 @@ export const DIGITAL_DATA: DigitalData = {
 
 // SYNC Media Performance Data (from attribution study)
 // Budget comes from TV reduction, shown in Digital section
+// Cost per ATC must be between YouTube (₹606) and JioHotstar (₹2,568)
+// Higher spend = saturation = higher cost per ATC (diminishing returns)
 export const SYNC_SCENARIOS = [
-  { spend: 14000000, atc: 35700, costPerATC: 365, ytATC: 14900, jhsATC: 2400 }, // ₹1.40 Cr
-  { spend: 12000000, atc: 26500, costPerATC: 686, ytATC: 14400, jhsATC: 2300 }, // ₹1.20 Cr
-  { spend: 10000000, atc: 18700, costPerATC: 714, ytATC: 13800, jhsATC: 2200 }, // ₹1.00 Cr
-  { spend: 8000000, atc: 12200, costPerATC: 748, ytATC: 13200, jhsATC: 2100 },  // ₹80 L
-  { spend: 6000000, atc: 7100, costPerATC: 790, ytATC: 12400, jhsATC: 2000 },   // ₹60 L
-  { spend: 4000000, atc: 3300, costPerATC: 838, ytATC: 11700, jhsATC: 1900 },   // ₹40 L
-  { spend: 2000000, atc: 970, costPerATC: 885, ytATC: 11100, jhsATC: 1800 },    // ₹20 L
+  { spend: 14000000, atc: 20000, costPerATC: 700, ytATC: 14900, jhsATC: 2400 }, // ₹1.40 Cr - saturated
+  { spend: 12000000, atc: 17500, costPerATC: 686, ytATC: 14400, jhsATC: 2300 }, // ₹1.20 Cr
+  { spend: 10000000, atc: 14000, costPerATC: 714, ytATC: 13800, jhsATC: 2200 }, // ₹1.00 Cr
+  { spend: 8000000, atc: 10700, costPerATC: 748, ytATC: 13200, jhsATC: 2100 },  // ₹80 L
+  { spend: 6000000, atc: 7600, costPerATC: 790, ytATC: 12400, jhsATC: 2000 },   // ₹60 L
+  { spend: 4000000, atc: 4800, costPerATC: 833, ytATC: 11700, jhsATC: 1900 },   // ₹40 L
+  { spend: 2000000, atc: 2260, costPerATC: 885, ytATC: 11100, jhsATC: 1800 },    // ₹20 L
 ]
 
 // Interpolate SYNC metrics based on budget
+// Includes saturation: higher spend = diminishing returns
 export function getSyncMetrics(syncSpend: number) {
   if (syncSpend <= 0) return { atc: 0, costPerATC: 0, ytATC: DIGITAL_DATA.YouTube.ATC, jhsATC: DIGITAL_DATA.JioHotstar.ATC }
   
   // Find the two scenarios to interpolate between
   const sorted = [...SYNC_SCENARIOS].sort((a, b) => a.spend - b.spend)
   
+  // Below minimum: use first scenario
   if (syncSpend <= sorted[0].spend) return sorted[0]
-  if (syncSpend >= sorted[sorted.length - 1].spend) return sorted[sorted.length - 1]
   
+  // Above maximum: apply saturation (diminishing returns)
+  if (syncSpend >= sorted[sorted.length - 1].spend) {
+    const maxScenario = sorted[sorted.length - 1]
+    const excessSpend = syncSpend - maxScenario.spend
+    const saturationFactor = Math.pow(0.85, excessSpend / 2000000) // 15% reduction per ₹20L excess
+    
+    const saturatedATC = Math.round(maxScenario.atc * saturationFactor)
+    const saturatedCostPerATC = Math.round(maxScenario.spend / saturatedATC)
+    
+    // Ensure cost per ATC stays between YouTube (₹606) and JioHotstar (₹2,568)
+    const minCostPerATC = 606
+    const maxCostPerATC = 2568
+    const finalCostPerATC = Math.max(minCostPerATC, Math.min(maxCostPerATC, saturatedCostPerATC))
+    
+    return {
+      spend: syncSpend,
+      atc: saturatedATC,
+      costPerATC: finalCostPerATC,
+      ytATC: maxScenario.ytATC,
+      jhsATC: maxScenario.jhsATC,
+    }
+  }
+  
+  // Interpolate between scenarios
   for (let i = 0; i < sorted.length - 1; i++) {
     if (syncSpend >= sorted[i].spend && syncSpend <= sorted[i + 1].spend) {
       const ratio = (syncSpend - sorted[i].spend) / (sorted[i + 1].spend - sorted[i].spend)
-      return {
+      const interpolated = {
         spend: syncSpend,
         atc: Math.round(sorted[i].atc + ratio * (sorted[i + 1].atc - sorted[i].atc)),
         costPerATC: Math.round(sorted[i].costPerATC + ratio * (sorted[i + 1].costPerATC - sorted[i].costPerATC)),
         ytATC: Math.round(sorted[i].ytATC + ratio * (sorted[i + 1].ytATC - sorted[i].ytATC)),
         jhsATC: Math.round(sorted[i].jhsATC + ratio * (sorted[i + 1].jhsATC - sorted[i].jhsATC)),
       }
+      
+      // Ensure cost per ATC stays within bounds
+      const minCostPerATC = 606 // YouTube baseline
+      const maxCostPerATC = 2568 // JioHotstar baseline
+      interpolated.costPerATC = Math.max(minCostPerATC, Math.min(maxCostPerATC, interpolated.costPerATC))
+      
+      return interpolated
     }
   }
   return sorted[sorted.length - 1]

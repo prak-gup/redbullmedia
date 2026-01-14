@@ -61,14 +61,28 @@ export function useOptimizedMetrics(
     const ytMultiplier = newYTBudget / baselineMetrics.youtube.Spend
     const jhsMultiplier = newJHSBudget / baselineMetrics.jiohotstar.Spend
     
+    // YouTube saturation: After 81% split, performance drops significantly
+    // Calculate saturation factor based on how much above 81% we are
+    const optimalYTSplit = 81
+    let ytSaturationFactor = 1.0
+    if (ytJhsSplit > optimalYTSplit) {
+      // Diminishing returns: each % above 81% reduces efficiency by 5%
+      const excessPercent = ytJhsSplit - optimalYTSplit
+      ytSaturationFactor = 1 - (excessPercent * 0.05) // Max 19% reduction at 100%
+      ytSaturationFactor = Math.max(0.3, ytSaturationFactor) // Minimum 30% efficiency
+    }
+    
     // When SYNC is enabled, use adjusted ATC values (SYNC captures some conversions)
     let newYTATC, newJHSATC
     if (syncEnabled) {
       // SYNC affects YT and JHS performance (overlap effect)
-      newYTATC = Math.round(syncMetrics.ytATC * ytMultiplier)
+      // Apply YouTube saturation to SYNC-adjusted values too
+      const baseYTATC = Math.round(syncMetrics.ytATC * ytMultiplier)
+      newYTATC = Math.round(baseYTATC * ytSaturationFactor)
       newJHSATC = Math.round(syncMetrics.jhsATC * jhsMultiplier)
     } else {
-      newYTATC = calcATC(baselineMetrics.youtube.ATC, ytMultiplier, 0.78)
+      const baseYTATC = calcATC(baselineMetrics.youtube.ATC, ytMultiplier, 0.78)
+      newYTATC = Math.round(baseYTATC * ytSaturationFactor)
       newJHSATC = calcATC(baselineMetrics.jiohotstar.ATC, jhsMultiplier, 0.72)
     }
     
