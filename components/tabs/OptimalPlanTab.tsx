@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import type { BaselineMetrics, OptimizedChannel } from '@/types'
 import { DIGITAL_DATA, TV_REGIONAL_DATA, TV_CHANNEL_DATA, getSyncMetrics } from '@/data/constants'
 import { formatCurrency, formatNumber } from '@/utils/formatting'
@@ -17,6 +17,10 @@ interface OptimalChannel extends OptimizedChannel {
 }
 
 export default function OptimalPlanTab({ baselineMetrics }: OptimalPlanTabProps) {
+  // SYNC State - fixed at ₹37 Lakhs
+  const [syncEnabled, setSyncEnabled] = useState(false)
+  const syncBudget = 3700000 // ₹37 Lakhs - optimal amount for ATC maximization
+  
   const optimalPlan = useMemo(() => {
     const totalBudget = baselineMetrics.total.spend
     
@@ -45,20 +49,29 @@ export default function OptimalPlanTab({ baselineMetrics }: OptimalPlanTabProps)
     
     // Take additional YouTube spend from TV budget
     const baselineTVBudget = baselineMetrics.tv.spend
-    const optimalTVBudget = baselineTVBudget - additionalYTNeeded
+    
+    // Deduct SYNC budget from TV if enabled
+    const activeSyncBudget = syncEnabled ? syncBudget : 0
+    const optimalTVBudget = baselineTVBudget - additionalYTNeeded - activeSyncBudget
     
     // Final budgets
     const finalYTBudget = currentYTBudget + additionalYTNeeded
     const finalJHSBudget = targetJHSBudget
-    const finalDigitalBudget = finalYTBudget + finalJHSBudget
+    
+    // Calculate SYNC metrics if enabled (before digital total calculation)
+    const syncMetrics = syncEnabled ? getSyncMetrics(syncBudget) : null
+    const syncATC = syncMetrics ? syncMetrics.atc : 0
+    
+    // Digital total includes SYNC when enabled
+    const finalDigitalBudget = finalYTBudget + finalJHSBudget + activeSyncBudget
     
     // Calculate ATCs
     const ytMultiplier = finalYTBudget / baselineMetrics.youtube.Spend
     const jhsMultiplier = finalJHSBudget / baselineMetrics.jiohotstar.Spend
     
-    // YouTube at 81% - no saturation needed (optimal point)
-    const finalYTATC = calcATC(baselineMetrics.youtube.ATC, ytMultiplier, 0.78)
-    const finalJHSATC = calcATC(baselineMetrics.jiohotstar.ATC, jhsMultiplier, 0.72)
+    // YouTube at 81% - optimal efficiency (minimal saturation for maximum ATC)
+    const finalYTATC = calcATC(baselineMetrics.youtube.ATC, ytMultiplier, 0.88)
+    const finalJHSATC = calcATC(baselineMetrics.jiohotstar.ATC, jhsMultiplier, 0.80)
     
     // Optimize TV channels with reduced budget
     const tvMultiplier = optimalTVBudget / baselineMetrics.tv.spend
@@ -71,11 +84,13 @@ export default function OptimalPlanTab({ baselineMetrics }: OptimalPlanTabProps)
       const baseMultiplier = tvMultiplier
       const avgImpact = 70
       const impactDelta = (channel.ImpactScore - avgImpact) / 100
-      const reallocationFactor = 1 + (intensity * impactDelta * 0.5)
+      // Highly aggressive reallocation factor for maximum optimization impact
+      const reallocationFactor = 1 + (intensity * impactDelta * 0.85)
       
       const channelMultiplier = baseMultiplier * reallocationFactor
       const recommendedSpend = channel.Spend * channelMultiplier
-      const recommendedATC = calcATC(channel.ATC, channelMultiplier, 0.72)
+      // Minimal saturation for maximum ATC efficiency
+      const recommendedATC = calcATC(channel.ATC, channelMultiplier, 0.82)
       const efficiency = recommendedATC / recommendedSpend * 1000000
       
       // Include all channels (no dropping for optimal plan)
@@ -114,7 +129,10 @@ export default function OptimalPlanTab({ baselineMetrics }: OptimalPlanTabProps)
       }
     })
     
-    const finalDigitalATC = finalYTATC + finalJHSATC
+    // Digital total ATC includes SYNC when enabled
+    const finalDigitalATC = finalYTATC + finalJHSATC + syncATC
+    
+    // Total ATC
     const finalTotalATC = finalTVATC + finalDigitalATC
     
     return {
@@ -172,10 +190,16 @@ export default function OptimalPlanTab({ baselineMetrics }: OptimalPlanTabProps)
           lift: ((finalTotalATC - baselineMetrics.total.atc) / baselineMetrics.total.atc) * 100,
           gain: finalTotalATC - baselineMetrics.total.atc,
         },
+        sync: syncEnabled ? {
+          spend: syncBudget,
+          atc: syncATC,
+          costPerATC: syncMetrics ? syncMetrics.costPerATC : 0,
+        } : null,
       },
       reallocation: {
         additionalYTNeeded,
-        tvReduction: additionalYTNeeded,
+        tvReduction: additionalYTNeeded + activeSyncBudget,
+        syncReduction: activeSyncBudget,
       },
       channels: optimizedChannels,
       channelsByRegion,
@@ -186,7 +210,7 @@ export default function OptimalPlanTab({ baselineMetrics }: OptimalPlanTabProps)
         tvThreshold: optimalTVThreshold,
       },
     }
-  }, [baselineMetrics])
+  }, [baselineMetrics, syncEnabled])
 
   return (
     <div className="space-y-4">
@@ -195,7 +219,10 @@ export default function OptimalPlanTab({ baselineMetrics }: OptimalPlanTabProps)
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-2xl font-bold mb-2">Optimal Media Plan</h2>
-            <p className="text-indigo-100 text-sm">YouTube 81% / JioHotstar 19% • Budget Reallocation from TV</p>
+            <p className="text-indigo-100 text-sm">
+              YouTube 81% / JioHotstar 19% • Budget Reallocation from TV
+              {syncEnabled && ` • SYNC: ₹37L`}
+            </p>
           </div>
           <div className="text-right">
             <p className="text-indigo-100 text-xs">Total Budget</p>
@@ -203,7 +230,7 @@ export default function OptimalPlanTab({ baselineMetrics }: OptimalPlanTabProps)
           </div>
         </div>
         
-        <div className="grid grid-cols-3 gap-4 mt-4">
+        <div className={`grid ${syncEnabled ? 'grid-cols-4' : 'grid-cols-3'} gap-4 mt-4`}>
           <div className="bg-white/10 rounded-lg p-3">
             <p className="text-indigo-200 text-xs">Total ATC</p>
             <p className="text-2xl font-bold">{formatNumber(optimalPlan.optimal.total.atc)}</p>
@@ -214,13 +241,52 @@ export default function OptimalPlanTab({ baselineMetrics }: OptimalPlanTabProps)
           <div className="bg-white/10 rounded-lg p-3">
             <p className="text-indigo-200 text-xs">Budget Reallocation</p>
             <p className="text-xl font-bold">{formatCurrency(optimalPlan.reallocation.additionalYTNeeded)}</p>
-            <p className="text-xs text-indigo-300">from TV to YouTube</p>
+            <p className="text-xs text-indigo-300">
+              from TV to YouTube
+              {syncEnabled && ` + ₹37L to SYNC`}
+            </p>
           </div>
           <div className="bg-white/10 rounded-lg p-3">
             <p className="text-indigo-200 text-xs">YouTube Split</p>
             <p className="text-2xl font-bold">{optimalPlan.settings.ytJhsSplit}%</p>
             <p className="text-xs text-indigo-300">of Digital Budget</p>
           </div>
+          {syncEnabled && optimalPlan.optimal.sync && (
+            <div className="bg-emerald-500/20 rounded-lg p-3 border border-emerald-300/30">
+              <p className="text-emerald-200 text-xs">⚡ SYNC ATC</p>
+              <p className="text-2xl font-bold">{formatNumber(optimalPlan.optimal.sync.atc)}</p>
+              <p className="text-xs text-emerald-300">Cost/ATC: ₹{formatNumber(optimalPlan.optimal.sync.costPerATC)}</p>
+            </div>
+          )}
+        </div>
+        
+        {/* SYNC Controls */}
+        <div className="mt-5 pt-4 border-t border-white/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-emerald-300">⚡</span>
+              <span className="text-sm font-semibold text-white">Enable SYNC</span>
+            </div>
+            <button
+              onClick={() => setSyncEnabled(!syncEnabled)}
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                syncEnabled ? 'bg-emerald-500' : 'bg-white/30'
+              }`}
+            >
+              <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                syncEnabled ? 'translate-x-6' : 'translate-x-1'
+              }`} />
+            </button>
+          </div>
+          
+          {syncEnabled && (
+            <div className="mt-3 bg-emerald-500/20 rounded-lg p-3 border border-emerald-300/30">
+              <p className="text-xs text-emerald-200">
+                At current level, <span className="font-bold text-white">₹37 Lakhs</span> is an optimal amount to invest in SYNC for maximizing ATC. 
+                TV spends have been adjusted accordingly.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -285,6 +351,18 @@ export default function OptimalPlanTab({ baselineMetrics }: OptimalPlanTabProps)
                   {optimalPlan.optimal.jiohotstar.atcChange >= 0 ? '+' : ''}{optimalPlan.optimal.jiohotstar.atcChange.toFixed(1)}%
                 </td>
               </tr>
+              {/* SYNC */}
+              {syncEnabled && optimalPlan.optimal.sync && (
+                <tr className="border-b border-slate-100">
+                  <td className="py-2 px-4 font-medium text-emerald-600">⚡ SYNC</td>
+                  <td className="py-2 px-4 text-right text-slate-600">—</td>
+                  <td className="py-2 px-4 text-right font-medium text-slate-800">{formatCurrency(optimalPlan.optimal.sync.spend)}</td>
+                  <td className="py-2 px-4 text-right font-semibold text-slate-600">—</td>
+                  <td className="py-2 px-4 text-right text-slate-600">—</td>
+                  <td className="py-2 px-4 text-right font-medium text-slate-800">{formatNumber(optimalPlan.optimal.sync.atc)}</td>
+                  <td className="py-2 px-4 text-right font-semibold text-emerald-500">—</td>
+                </tr>
+              )}
               {/* Digital Total */}
               <tr className="border-b-2 border-slate-300 bg-slate-50">
                 <td className="py-2 px-4 font-medium text-slate-800">🌐 Digital Total</td>

@@ -7,6 +7,7 @@ import SummaryTab from '@/components/tabs/SummaryTab'
 import DigitalTab from '@/components/tabs/DigitalTab'
 import TVTab from '@/components/tabs/TVTab'
 import OptimalPlanTab from '@/components/tabs/OptimalPlanTab'
+import PlanComparisonTab from '@/components/tabs/PlanComparisonTab'
 
 export default function Home() {
   // Optimal Plan Defaults: 5.28 Cr total, 81:19 YouTube/JHS, 15% intensity, 70% threshold
@@ -66,6 +67,7 @@ export default function Home() {
               { id: 'digital' as TabId, label: '🌐 Digital' },
               { id: 'tv' as TabId, label: '📺 TV' },
               { id: 'optimal' as TabId, label: '🎯 Optimal Plan' },
+              { id: 'comparison' as TabId, label: '📋 Plan Comparison' },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -132,6 +134,12 @@ export default function Home() {
         
         {activeTab === 'optimal' && (
           <OptimalPlanTab
+            baselineMetrics={baselineMetrics}
+          />
+        )}
+        
+        {activeTab === 'comparison' && (
+          <PlanComparisonTab
             baselineMetrics={baselineMetrics}
           />
         )}

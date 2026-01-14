@@ -114,6 +114,6 @@ export interface PieDataItem {
   color: string
 }
 
-export type TabId = 'summary' | 'digital' | 'tv' | 'optimal'
+export type TabId = 'summary' | 'digital' | 'tv' | 'optimal' | 'comparison'
 export type RegionCode = 'HSM' | 'AP' | 'TN' | 'Kar' | 'Ker' | 'WB' | 'Sports' | 'Others'
 export type SliderColor = 'orange' | 'cyan' | 'indigo' | 'emerald' | 'red' | 'blue'
