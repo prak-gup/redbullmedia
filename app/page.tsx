@@ -39,56 +39,58 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <header className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white px-4 py-3 sm:px-6 sm:py-4">
+        <div className="max-w-7xl mx-auto flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-bold">Cross-Media Campaign Optimizer</h1>
-            <p className="text-slate-400 text-xs">Red Bull • TV + Digital Attribution</p>
+            <h1 className="text-lg font-bold sm:text-xl">Cross-Media Campaign Optimizer</h1>
+            <p className="text-slate-400 text-[10px] sm:text-xs">Red Bull • TV + Digital Attribution</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {hasOptimized && (
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30">
-                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-emerald-400 text-xs font-medium">Optimized</span>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 sm:gap-2 sm:px-3 sm:py-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse sm:w-2 sm:h-2" />
+                <span className="text-emerald-400 text-[10px] font-medium sm:text-xs">Optimized</span>
               </div>
             )}
-            <div className="text-xs text-slate-400">
+            <div className="text-[10px] text-slate-400 sm:text-xs">
               <span>WPP</span> + <span className="text-emerald-400 font-semibold">SYNC</span>
             </div>
           </div>
         </div>
       </header>
       
-      <main className="max-w-7xl mx-auto p-4">
+      <main className="max-w-7xl mx-auto p-2 sm:p-4">
         {/* Navigation */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex gap-1 bg-white rounded-lg p-1 shadow-sm border border-slate-200">
-            {[
-              { id: 'home' as TabId, label: '🏠 Home' },
-              { id: 'summary' as TabId, label: '📊 Summary' },
-              { id: 'digital' as TabId, label: '🌐 Digital' },
-              { id: 'tv' as TabId, label: '📺 TV' },
-              { id: 'optimal' as TabId, label: '🎯 Optimal Plan' },
-              { id: 'comparison' as TabId, label: '📋 Plan Comparison' },
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
-                  activeTab === tab.id ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+        <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+            <div className="flex gap-1 bg-white rounded-lg p-1 shadow-sm border border-slate-200 min-w-max sm:min-w-0">
+              {[
+                { id: 'home' as TabId, label: '🏠 Home' },
+                { id: 'summary' as TabId, label: '📊 Summary' },
+                { id: 'digital' as TabId, label: '🌐 Digital' },
+                { id: 'tv' as TabId, label: '📺 TV' },
+                { id: 'optimal' as TabId, label: '🎯 Optimal Plan' },
+                { id: 'comparison' as TabId, label: '📋 Plan Comparison' },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-2 py-1.5 rounded text-[10px] font-medium transition-all whitespace-nowrap sm:px-3 sm:text-xs ${
+                    activeTab === tab.id ? 'bg-slate-900 text-white' : 'text-slate-600 active:bg-slate-100 sm:hover:bg-slate-100'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
           
           <button
             onClick={() => setHasOptimized(!hasOptimized)}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all shadow ${
+            className={`w-full px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all shadow active:opacity-90 sm:w-auto sm:text-xs ${
               hasOptimized
-                ? 'bg-slate-600 hover:bg-slate-700'
-                : 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700'
+                ? 'bg-slate-600 active:bg-slate-700 sm:hover:bg-slate-700'
+                : 'bg-gradient-to-r from-orange-500 to-orange-600 active:from-orange-600 active:to-orange-700 sm:hover:from-orange-600 sm:hover:to-orange-700'
             }`}
           >
             {hasOptimized ? '↺ Reset' : '⚡ Run Optimization'}

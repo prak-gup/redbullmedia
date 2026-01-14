@@ -96,19 +96,19 @@ export default function FeaturesSection({ onLaunchOptimizer }: FeaturesSectionPr
     <section
       id="features"
       ref={sectionRef}
-      className="relative bg-gradient-to-b from-slate-50 to-white py-24"
+      className="relative bg-gradient-to-b from-slate-50 to-white py-12 sm:py-16 md:py-24"
     >
-      <div className="mx-auto max-w-7xl px-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
         {/* Header */}
-        <div className="mb-16 text-center">
-          <h2 className="mb-4 text-4xl font-bold tracking-tight text-slate-900 md:text-5xl">
+        <div className="mb-10 text-center sm:mb-16">
+          <h2 className="mb-3 text-2xl font-bold tracking-tight text-slate-900 sm:mb-4 sm:text-4xl md:text-5xl">
             Powerful Features for
             <br />
             <span className="bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
               Media Excellence
             </span>
           </h2>
-          <p className="mx-auto max-w-2xl text-lg text-slate-600">
+          <p className="mx-auto max-w-2xl text-sm text-slate-600 sm:text-base md:text-lg">
             Leverage advanced optimization algorithms and SYNC-powered insights
             to maximize your campaign&apos;s Attention To Content (ATC) performance
             across all media channels.
@@ -118,22 +118,22 @@ export default function FeaturesSection({ onLaunchOptimizer }: FeaturesSectionPr
         {/* Features Grid */}
         <div
           ref={featuresRef}
-          className="grid gap-8 md:grid-cols-2 lg:grid-cols-3"
+          className="grid gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3"
         >
           {features.map((feature, index) => (
             <div
               key={index}
-              className={`feature-card rounded-2xl border p-8 transition-all hover:shadow-xl ${
+              className={`feature-card rounded-xl border p-6 transition-all sm:rounded-2xl sm:p-8 sm:hover:shadow-xl ${
                 feature.highlight
                   ? 'border-emerald-500/50 bg-gradient-to-br from-emerald-50 to-white shadow-lg'
                   : 'border-slate-200 bg-white'
               }`}
             >
-              <div className="mb-4 text-4xl">{feature.icon}</div>
-              <h3 className="mb-3 text-xl font-bold text-slate-900">
+              <div className="mb-3 text-3xl sm:mb-4 sm:text-4xl">{feature.icon}</div>
+              <h3 className="mb-2 text-lg font-bold text-slate-900 sm:mb-3 sm:text-xl">
                 {feature.title}
               </h3>
-              <p className="text-slate-600">{feature.description}</p>
+              <p className="text-sm text-slate-600 sm:text-base">{feature.description}</p>
               {feature.highlight && (
                 <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
                   <span className="text-emerald-500">⚡</span>
@@ -145,12 +145,12 @@ export default function FeaturesSection({ onLaunchOptimizer }: FeaturesSectionPr
         </div>
 
         {/* CTA Section */}
-        <div className="mt-20 text-center">
-          <div className="mx-auto max-w-2xl rounded-3xl bg-gradient-to-r from-slate-900 to-slate-800 p-12 text-white">
-            <h3 className="mb-4 text-3xl font-bold">
+        <div className="mt-12 text-center sm:mt-16 md:mt-20">
+          <div className="mx-auto max-w-2xl rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white sm:rounded-3xl sm:p-12">
+            <h3 className="mb-3 text-xl font-bold sm:mb-4 sm:text-3xl">
               Ready to Optimize Your Campaign?
             </h3>
-            <p className="mb-8 text-lg text-slate-300">
+            <p className="mb-6 text-sm text-slate-300 sm:mb-8 sm:text-base md:text-lg">
               Start maximizing ATC with our advanced cross-media optimization
               platform powered by SYNC.
             </p>
@@ -158,7 +158,7 @@ export default function FeaturesSection({ onLaunchOptimizer }: FeaturesSectionPr
               onClick={() => {
                 onLaunchOptimizer?.()
               }}
-              className="inline-block rounded-full bg-white px-8 py-4 text-lg font-semibold text-slate-900 transition-all hover:bg-white/90 hover:scale-105"
+              className="w-full rounded-full bg-white px-6 py-3 text-base font-semibold text-slate-900 transition-all active:bg-white/90 sm:w-auto sm:px-8 sm:py-4 sm:text-lg sm:hover:bg-white/90 sm:hover:scale-105"
             >
               Launch Optimizer Now
             </button>

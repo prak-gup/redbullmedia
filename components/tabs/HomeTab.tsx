@@ -9,7 +9,7 @@ interface HomeTabProps {
 
 export default function HomeTab({ onTabChange }: HomeTabProps) {
   return (
-    <div className="relative -mx-4">
+    <div className="relative -mx-2 sm:-mx-4">
       <HeroSection onLaunchOptimizer={() => onTabChange?.('summary')} />
       <FeaturesSection onLaunchOptimizer={() => onTabChange?.('summary')} />
     </div>
