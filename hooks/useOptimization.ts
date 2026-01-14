@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { BaselineMetrics, OptimizedMetrics } from '@/types'
-import { DIGITAL_DATA, TV_REGIONAL_DATA, TV_CHANNEL_DATA } from '@/data/constants'
+import { DIGITAL_DATA, TV_REGIONAL_DATA, TV_CHANNEL_DATA, getSyncMetrics } from '@/data/constants'
 
 /**
  * Calculates baseline metrics from raw data
@@ -34,13 +34,21 @@ export function useOptimizedMetrics(
   tvDigitalSplit: number,
   ytJhsSplit: number,
   tvIntensity: number,
-  tvThreshold: number
+  tvThreshold: number,
+  syncEnabled: boolean,
+  syncBudget: number
 ): OptimizedMetrics | null {
   return useMemo(() => {
     if (!hasOptimized) return null
     
     const totalBudget = baselineMetrics.total.spend
-    const newTVBudget = totalBudget * (tvDigitalSplit / 100)
+    
+    // SYNC budget comes from TV reduction
+    const activeSyncBudget = syncEnabled ? syncBudget : 0
+    const syncMetrics = getSyncMetrics(activeSyncBudget)
+    
+    // Adjust TV budget (reduced by SYNC amount)
+    const newTVBudget = (totalBudget * (tvDigitalSplit / 100)) - activeSyncBudget
     const newDigitalBudget = totalBudget * ((100 - tvDigitalSplit) / 100)
     const newYTBudget = newDigitalBudget * (ytJhsSplit / 100)
     const newJHSBudget = newDigitalBudget * ((100 - ytJhsSplit) / 100)
@@ -52,11 +60,22 @@ export function useOptimizedMetrics(
     
     const ytMultiplier = newYTBudget / baselineMetrics.youtube.Spend
     const jhsMultiplier = newJHSBudget / baselineMetrics.jiohotstar.Spend
-    const newYTATC = calcATC(baselineMetrics.youtube.ATC, ytMultiplier, 0.78)
-    const newJHSATC = calcATC(baselineMetrics.jiohotstar.ATC, jhsMultiplier, 0.72)
-    const newDigitalATC = newYTATC + newJHSATC
+    
+    // When SYNC is enabled, use adjusted ATC values (SYNC captures some conversions)
+    let newYTATC, newJHSATC
+    if (syncEnabled) {
+      // SYNC affects YT and JHS performance (overlap effect)
+      newYTATC = Math.round(syncMetrics.ytATC * ytMultiplier)
+      newJHSATC = Math.round(syncMetrics.jhsATC * jhsMultiplier)
+    } else {
+      newYTATC = calcATC(baselineMetrics.youtube.ATC, ytMultiplier, 0.78)
+      newJHSATC = calcATC(baselineMetrics.jiohotstar.ATC, jhsMultiplier, 0.72)
+    }
+    
+    const newDigitalATC = newYTATC + newJHSATC + (syncEnabled ? syncMetrics.atc : 0)
     
     // TV Regional - CONSISTENT: Same % change for all regions as overall TV
+    // Note: newTVBudget already has SYNC budget deducted
     const tvMultiplier = newTVBudget / baselineMetrics.tv.spend
     const intensity = tvIntensity / 100
     const optimizedRegions: Record<string, any> = {}
@@ -152,9 +171,9 @@ export function useOptimizedMetrics(
         atcChange: ((totalOptimizedTVATC - baselineMetrics.tv.atc) / baselineMetrics.tv.atc) * 100,
       },
       digital: {
-        spend: newDigitalBudget,
+        spend: newDigitalBudget + activeSyncBudget,
         atc: newDigitalATC,
-        spendChange: ((newDigitalBudget - baselineMetrics.digital.spend) / baselineMetrics.digital.spend) * 100,
+        spendChange: (((newDigitalBudget + activeSyncBudget) - baselineMetrics.digital.spend) / baselineMetrics.digital.spend) * 100,
         atcChange: ((newDigitalATC - baselineMetrics.digital.atc) / baselineMetrics.digital.atc) * 100,
       },
       youtube: {
@@ -169,6 +188,12 @@ export function useOptimizedMetrics(
         spendChange: ((newJHSBudget - baselineMetrics.jiohotstar.Spend) / baselineMetrics.jiohotstar.Spend) * 100,
         atcChange: ((newJHSATC - baselineMetrics.jiohotstar.ATC) / baselineMetrics.jiohotstar.ATC) * 100,
       },
+      sync: syncEnabled ? {
+        spend: activeSyncBudget,
+        atc: syncMetrics.atc,
+        costPerATC: syncMetrics.costPerATC,
+        share: (syncMetrics.atc / newDigitalATC) * 100,
+      } : null,
       regions: optimizedRegions,
       channels: optimizedChannels,
       total: {
@@ -178,5 +203,5 @@ export function useOptimizedMetrics(
         atcGain: newTotalATC - baselineMetrics.total.atc,
       }
     }
-  }, [hasOptimized, baselineMetrics, tvDigitalSplit, ytJhsSplit, tvIntensity, tvThreshold])
+  }, [hasOptimized, baselineMetrics, tvDigitalSplit, ytJhsSplit, tvIntensity, tvThreshold, syncEnabled, syncBudget])
 }

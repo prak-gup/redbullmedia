@@ -15,10 +15,14 @@ interface SummaryTabProps {
   ytJhsSplit: number
   tvIntensity: number
   tvThreshold: number
+  syncEnabled: boolean
+  syncBudget: number
   onTvDigitalSplitChange: (value: number) => void
   onYtJhsSplitChange: (value: number) => void
   onTvIntensityChange: (value: number) => void
   onTvThresholdChange: (value: number) => void
+  onSyncEnabledChange: (value: boolean) => void
+  onSyncBudgetChange: (value: number) => void
   onOptimizationChange: () => void
 }
 
@@ -30,19 +34,27 @@ export default function SummaryTab({
   ytJhsSplit,
   tvIntensity,
   tvThreshold,
+  syncEnabled,
+  syncBudget,
   onTvDigitalSplitChange,
   onYtJhsSplitChange,
   onTvIntensityChange,
   onTvThresholdChange,
+  onSyncEnabledChange,
+  onSyncBudgetChange,
   onOptimizationChange,
 }: SummaryTabProps) {
   const summaryPieData = useMemo<PieDataItem[]>(() => {
     if (hasOptimized && optimizedMetrics) {
-      return [
+      const data = [
         { name: 'TV', value: optimizedMetrics.tv.spend, color: '#6366f1' },
         { name: 'YouTube', value: optimizedMetrics.youtube.spend, color: '#ef4444' },
         { name: 'JioHotstar', value: optimizedMetrics.jiohotstar.spend, color: '#3b82f6' },
       ]
+      if (optimizedMetrics.sync) {
+        data.push({ name: 'SYNC', value: optimizedMetrics.sync.spend, color: '#10b981' })
+      }
+      return data
     }
     return [
       { name: 'TV', value: baselineMetrics.tv.spend, color: '#6366f1' },
@@ -59,8 +71,12 @@ export default function SummaryTab({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-emerald-100 text-xs uppercase">Optimization Impact</p>
-              <p className="text-3xl font-bold">+{optimizedMetrics.total.atcLift.toFixed(1)}% ATC</p>
-              <p className="text-emerald-100 text-sm">+{optimizedMetrics.total.atcGain.toLocaleString()} incremental</p>
+              <p className="text-3xl font-bold">
+                {optimizedMetrics.total.atcLift >= 0 ? '+' : ''}{optimizedMetrics.total.atcLift.toFixed(1)}% ATC
+              </p>
+              <p className="text-emerald-100 text-sm">
+                {optimizedMetrics.total.atcGain >= 0 ? '+' : ''}{optimizedMetrics.total.atcGain.toLocaleString()} incremental
+              </p>
             </div>
             <div className="text-right">
               <p className="text-emerald-100 text-xs">Budget Neutral</p>
@@ -133,12 +149,60 @@ export default function SummaryTab({
               rightLabel="More Protected"
             />
           </div>
+          
+          {/* SYNC Controls */}
+          <div className="mt-5 pt-4 border-t border-slate-100">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-500">⚡</span>
+                <span className="text-xs font-semibold text-slate-700">Enable SYNC</span>
+              </div>
+              <button
+                onClick={() => { onSyncEnabledChange(!syncEnabled); if(hasOptimized) onOptimizationChange(); }}
+                className={`relative w-11 h-6 rounded-full transition-colors ${
+                  syncEnabled ? 'bg-emerald-500' : 'bg-slate-300'
+                }`}
+              >
+                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                  syncEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
+            </div>
+            
+            {syncEnabled && (
+              <div className="bg-emerald-900/10 rounded-lg p-3 border border-emerald-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] text-emerald-700 font-medium">SYNC Budget (Monthly)</span>
+                  <span className="text-sm font-bold text-emerald-600">
+                    {syncBudget >= 10000000 
+                      ? `₹${(syncBudget / 10000000).toFixed(2)} Cr`
+                      : `₹${(syncBudget / 100000).toFixed(0)} L`
+                    }
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={2000000}
+                  max={14000000}
+                  step={500000}
+                  value={syncBudget}
+                  onChange={(e) => { onSyncBudgetChange(parseInt(e.target.value)); if(hasOptimized) onOptimizationChange(); }}
+                  className="w-full h-2 bg-emerald-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                />
+                <div className="flex justify-between mt-1">
+                  <span className="text-[10px] text-emerald-600">₹20 L</span>
+                  <span className="text-[10px] text-emerald-600">₹1.40 Cr</span>
+                </div>
+                <p className="text-[10px] text-emerald-600 mt-2 italic">Budget sourced from TV reduction</p>
+              </div>
+            )}
+          </div>
         </div>
         
         {/* RIGHT: Summary */}
         <div className="col-span-7 space-y-4">
           {/* Platform Cards */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className={`grid gap-3 ${syncEnabled && hasOptimized && optimizedMetrics?.sync ? 'grid-cols-4' : 'grid-cols-3'}`}>
             {/* TV */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
               <div className="flex items-center gap-2 mb-3">
@@ -213,6 +277,31 @@ export default function SummaryTab({
                 />
               </div>
             </div>
+            
+            {/* SYNC - Only show when enabled and optimized */}
+            {syncEnabled && hasOptimized && optimizedMetrics?.sync && (
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl shadow-sm border border-emerald-200 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
+                    <span className="text-white text-sm">⚡</span>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-emerald-800">SYNC</p>
+                    <p className="text-[10px] text-emerald-600">NEW</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <MiniMetric 
+                    label="Spend" 
+                    value={formatCurrency(optimizedMetrics.sync.spend)}
+                  />
+                  <MiniMetric 
+                    label="ATC" 
+                    value={formatNumber(optimizedMetrics.sync.atc)}
+                  />
+                </div>
+              </div>
+            )}
           </div>
           
           {/* Budget Distribution */}

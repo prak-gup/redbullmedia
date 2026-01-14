@@ -23,8 +23,8 @@ export default function DigitalTab({
         </div>
       )}
       
-      {/* Digital Summary */}
-      <div className="grid grid-cols-2 gap-4">
+            {/* Digital Summary */}
+            <div className={`grid gap-4 ${hasOptimized && optimizedMetrics?.sync ? 'grid-cols-3' : 'grid-cols-2'}`}>
         {/* YouTube */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="bg-gradient-to-r from-red-500 to-red-600 px-4 py-3 flex items-center justify-between">
@@ -112,6 +112,50 @@ export default function DigitalTab({
             </div>
           </div>
         </div>
+        
+        {/* SYNC Card - Only when enabled and optimized */}
+        {hasOptimized && optimizedMetrics?.sync && (
+          <div className="bg-white rounded-xl shadow-sm border border-emerald-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">⚡</span>
+                <div>
+                  <h3 className="text-sm font-semibold text-white">SYNC Media</h3>
+                  <p className="text-emerald-200 text-[10px]">Incremental reach</p>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-white/20 text-white">
+                NEW
+              </span>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[10px] text-slate-500 uppercase">Spend</p>
+                  <p className="text-xl font-bold text-emerald-600">
+                    {formatCurrency(optimizedMetrics.sync.spend)}
+                  </p>
+                  <p className="text-[10px] text-emerald-500">from TV reduction</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-500 uppercase">ATC</p>
+                  <p className="text-xl font-bold text-emerald-600">
+                    {formatNumber(optimizedMetrics.sync.atc)}
+                  </p>
+                  <p className="text-[10px] text-emerald-500">
+                    {optimizedMetrics.sync.share.toFixed(1)}% of digital
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-emerald-100">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-slate-500">Cost/ATC</span>
+                  <span className="text-sm font-bold text-emerald-600">₹{optimizedMetrics.sync.costPerATC}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Comparison Table */}
@@ -159,6 +203,17 @@ export default function DigitalTab({
                   {hasOptimized && optimizedMetrics ? `${optimizedMetrics.jiohotstar.atcChange >= 0 ? '+' : ''}${optimizedMetrics.jiohotstar.atcChange.toFixed(1)}%` : '-'}
                 </td>
               </tr>
+              {hasOptimized && optimizedMetrics?.sync && (
+                <tr className="border-b border-slate-100 bg-emerald-50">
+                  <td className="py-2 px-4 font-medium text-emerald-600">⚡ SYNC</td>
+                  <td className="py-2 px-4 text-right text-slate-400">-</td>
+                  <td className="py-2 px-4 text-right font-medium text-emerald-600">{formatCurrency(optimizedMetrics.sync.spend)}</td>
+                  <td className="py-2 px-4 text-right font-semibold text-emerald-500">NEW</td>
+                  <td className="py-2 px-4 text-right text-slate-400">-</td>
+                  <td className="py-2 px-4 text-right font-medium text-emerald-600">{formatNumber(optimizedMetrics.sync.atc)}</td>
+                  <td className="py-2 px-4 text-right font-semibold text-emerald-500">+{formatNumber(optimizedMetrics.sync.atc)}</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -167,10 +222,19 @@ export default function DigitalTab({
       {/* Insight */}
       <div className="bg-slate-800 rounded-xl p-4 text-white">
         <h4 className="text-xs font-semibold mb-2">💡 Efficiency Insight</h4>
-        <p className="text-slate-300 text-xs">
-          YouTube delivers <span className="text-emerald-400 font-semibold">4.2x better efficiency</span> than JioHotstar 
-          for ATC conversions. Optimal split balances efficiency with incremental reach.
-        </p>
+        {hasOptimized && optimizedMetrics?.sync ? (
+          <p className="text-slate-300 text-xs">
+            SYNC delivers <span className="text-emerald-400 font-semibold">₹{optimizedMetrics.sync.costPerATC} per ATC</span> - 
+            making it highly efficient for incremental reach. Combined with YouTube and JioHotstar, 
+            digital now contributes <span className="text-cyan-400 font-semibold">{formatNumber(optimizedMetrics.digital.atc)} ATC</span> to the campaign.
+          </p>
+        ) : (
+          <p className="text-slate-300 text-xs">
+            YouTube delivers <span className="text-emerald-400 font-semibold">4.2x better efficiency</span> than JioHotstar 
+            for ATC conversions. Enable <span className="text-emerald-400 font-semibold">SYNC</span> to unlock additional 
+            incremental reach with best-in-class efficiency.
+          </p>
+        )}
       </div>
     </div>
   )

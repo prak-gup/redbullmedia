@@ -21,6 +21,43 @@ export const DIGITAL_DATA: DigitalData = {
   }
 }
 
+// SYNC Media Performance Data (from attribution study)
+// Budget comes from TV reduction, shown in Digital section
+export const SYNC_SCENARIOS = [
+  { spend: 14000000, atc: 35700, costPerATC: 365, ytATC: 14900, jhsATC: 2400 }, // ₹1.40 Cr
+  { spend: 12000000, atc: 26500, costPerATC: 686, ytATC: 14400, jhsATC: 2300 }, // ₹1.20 Cr
+  { spend: 10000000, atc: 18700, costPerATC: 714, ytATC: 13800, jhsATC: 2200 }, // ₹1.00 Cr
+  { spend: 8000000, atc: 12200, costPerATC: 748, ytATC: 13200, jhsATC: 2100 },  // ₹80 L
+  { spend: 6000000, atc: 7100, costPerATC: 790, ytATC: 12400, jhsATC: 2000 },   // ₹60 L
+  { spend: 4000000, atc: 3300, costPerATC: 838, ytATC: 11700, jhsATC: 1900 },   // ₹40 L
+  { spend: 2000000, atc: 970, costPerATC: 885, ytATC: 11100, jhsATC: 1800 },    // ₹20 L
+]
+
+// Interpolate SYNC metrics based on budget
+export function getSyncMetrics(syncSpend: number) {
+  if (syncSpend <= 0) return { atc: 0, costPerATC: 0, ytATC: DIGITAL_DATA.YouTube.ATC, jhsATC: DIGITAL_DATA.JioHotstar.ATC }
+  
+  // Find the two scenarios to interpolate between
+  const sorted = [...SYNC_SCENARIOS].sort((a, b) => a.spend - b.spend)
+  
+  if (syncSpend <= sorted[0].spend) return sorted[0]
+  if (syncSpend >= sorted[sorted.length - 1].spend) return sorted[sorted.length - 1]
+  
+  for (let i = 0; i < sorted.length - 1; i++) {
+    if (syncSpend >= sorted[i].spend && syncSpend <= sorted[i + 1].spend) {
+      const ratio = (syncSpend - sorted[i].spend) / (sorted[i + 1].spend - sorted[i].spend)
+      return {
+        spend: syncSpend,
+        atc: Math.round(sorted[i].atc + ratio * (sorted[i + 1].atc - sorted[i].atc)),
+        costPerATC: Math.round(sorted[i].costPerATC + ratio * (sorted[i + 1].costPerATC - sorted[i].costPerATC)),
+        ytATC: Math.round(sorted[i].ytATC + ratio * (sorted[i + 1].ytATC - sorted[i].ytATC)),
+        jhsATC: Math.round(sorted[i].jhsATC + ratio * (sorted[i + 1].jhsATC - sorted[i].jhsATC)),
+      }
+    }
+  }
+  return sorted[sorted.length - 1]
+}
+
 export const TV_REGIONAL_DATA: Record<string, TVRegionalData> = {
   AP: { Spend: 4315628, ATC: 916, Channels: 6, ReachPct: 19.4 },
   TN: { Spend: 5241481, ATC: 1114, Channels: 13, ReachPct: 19.8 },

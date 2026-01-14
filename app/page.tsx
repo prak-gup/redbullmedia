@@ -16,6 +16,10 @@ export default function Home() {
   const [hasOptimized, setHasOptimized] = useState(false)
   const [activeTab, setActiveTab] = useState<TabId>('summary')
   
+  // SYNC State
+  const [syncEnabled, setSyncEnabled] = useState(false)
+  const [syncBudget, setSyncBudget] = useState(4000000) // ₹40 L default
+  
   const baselineMetrics = useBaselineMetrics()
   const optimizedMetrics = useOptimizedMetrics(
     hasOptimized,
@@ -23,7 +27,9 @@ export default function Home() {
     tvDigitalSplit,
     ytJhsSplit,
     tvIntensity,
-    tvThreshold
+    tvThreshold,
+    syncEnabled,
+    syncBudget
   )
 
   return (
@@ -92,10 +98,14 @@ export default function Home() {
             ytJhsSplit={ytJhsSplit}
             tvIntensity={tvIntensity}
             tvThreshold={tvThreshold}
+            syncEnabled={syncEnabled}
+            syncBudget={syncBudget}
             onTvDigitalSplitChange={setTvDigitalSplit}
             onYtJhsSplitChange={setYtJhsSplit}
             onTvIntensityChange={setTvIntensity}
             onTvThresholdChange={setTvThreshold}
+            onSyncEnabledChange={setSyncEnabled}
+            onSyncBudgetChange={setSyncBudget}
             onOptimizationChange={() => setHasOptimized(false)}
           />
         )}

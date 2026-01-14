@@ -57,6 +57,21 @@ export interface BaselineMetrics {
   ytPct: number
 }
 
+export interface SyncMetrics {
+  spend: number
+  atc: number
+  costPerATC: number
+  ytATC: number
+  jhsATC: number
+}
+
+export interface OptimizedSync {
+  spend: number
+  atc: number
+  costPerATC: number
+  share: number
+}
+
 export interface OptimizedMetrics {
   tv: {
     spend: number
@@ -82,6 +97,7 @@ export interface OptimizedMetrics {
     spendChange: number
     atcChange: number
   }
+  sync: OptimizedSync | null
   regions: Record<string, OptimizedRegion>
   channels: OptimizedChannel[]
   total: {
