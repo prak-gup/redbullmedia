@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { TabId, RegionCode } from '@/types'
 import { useBaselineMetrics, useOptimizedMetrics } from '@/hooks/useOptimization'
+import HomeTab from '@/components/tabs/HomeTab'
 import SummaryTab from '@/components/tabs/SummaryTab'
 import DigitalTab from '@/components/tabs/DigitalTab'
 import TVTab from '@/components/tabs/TVTab'
@@ -17,7 +18,7 @@ export default function Home() {
   const [tvIntensity, setTvIntensity] = useState(15) // Optimal: 15% intensity
   const [tvThreshold, setTvThreshold] = useState(70) // Optimal: 70% protection threshold
   const [hasOptimized, setHasOptimized] = useState(false)
-  const [activeTab, setActiveTab] = useState<TabId>('summary')
+  const [activeTab, setActiveTab] = useState<TabId>('home')
   
   // SYNC State
   const [syncEnabled, setSyncEnabled] = useState(false)
@@ -63,6 +64,7 @@ export default function Home() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex gap-1 bg-white rounded-lg p-1 shadow-sm border border-slate-200">
             {[
+              { id: 'home' as TabId, label: '🏠 Home' },
               { id: 'summary' as TabId, label: '📊 Summary' },
               { id: 'digital' as TabId, label: '🌐 Digital' },
               { id: 'tv' as TabId, label: '📺 TV' },
@@ -94,6 +96,10 @@ export default function Home() {
         </div>
         
         {/* Tab Content */}
+        {activeTab === 'home' && (
+          <HomeTab onTabChange={(tab) => setActiveTab(tab as TabId)} />
+        )}
+        
         {activeTab === 'summary' && (
           <SummaryTab
             hasOptimized={hasOptimized}
