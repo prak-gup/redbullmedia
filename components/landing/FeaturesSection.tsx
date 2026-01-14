@@ -110,7 +110,7 @@ export default function FeaturesSection({ onLaunchOptimizer }: FeaturesSectionPr
           </h2>
           <p className="mx-auto max-w-2xl text-lg text-slate-600">
             Leverage advanced optimization algorithms and SYNC-powered insights
-            to maximize your campaign's Attention To Content (ATC) performance
+            to maximize your campaign&apos;s Attention To Content (ATC) performance
             across all media channels.
           </p>
         </div>
