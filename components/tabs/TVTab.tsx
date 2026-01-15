@@ -26,6 +26,20 @@ export default function TVTab({
     return optimizedMetrics.channels.filter(c => c.Region === selectedTVRegion)
   }, [selectedTVRegion, optimizedMetrics])
 
+  // Calculate actual channel counts per region
+  const regionChannelCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    const channels = hasOptimized && optimizedMetrics 
+      ? optimizedMetrics.channels 
+      : TV_CHANNEL_DATA
+    
+    channels.forEach(channel => {
+      counts[channel.Region] = (counts[channel.Region] || 0) + 1
+    })
+    
+    return counts
+  }, [hasOptimized, optimizedMetrics])
+
   const exportToCSV = () => {
     // Get all channels from all regions, not just selected region
     const allChannels = hasOptimized && optimizedMetrics
@@ -186,6 +200,7 @@ export default function TVTab({
             <tbody>
               {Object.entries(TV_REGIONAL_DATA).map(([region, data]) => {
                 const opt = hasOptimized && optimizedMetrics ? optimizedMetrics.regions[region] : null
+                const actualChannelCount = regionChannelCounts[region] || data.Channels
                 return (
                   <tr 
                     key={region} 
@@ -195,7 +210,7 @@ export default function TVTab({
                     onClick={() => onRegionChange(region as RegionCode)}
                   >
                     <td className="py-2 px-4 font-medium text-slate-800">{region}</td>
-                    <td className="py-2 px-4 text-right text-slate-800">{data.Channels}</td>
+                    <td className="py-2 px-4 text-right text-slate-800">{actualChannelCount}</td>
                     <td className="py-2 px-4 text-right text-slate-800">{formatCurrency(data.Spend)}</td>
                     <td className="py-2 px-4 text-right font-medium text-slate-800">{opt ? formatCurrency(opt.newSpend) : '-'}</td>
                     <td className={`py-2 px-4 text-right font-semibold ${opt ? (opt.spendChange >= 0 ? 'text-emerald-500' : 'text-rose-500') : 'text-slate-600'}`}>
