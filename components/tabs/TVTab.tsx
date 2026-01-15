@@ -26,6 +26,65 @@ export default function TVTab({
     return optimizedMetrics.channels.filter(c => c.Region === selectedTVRegion)
   }, [selectedTVRegion, optimizedMetrics])
 
+  const exportToCSV = () => {
+    // Prepare CSV data
+    const headers = [
+      'Channel',
+      'Region',
+      'Genre',
+      'Reach %',
+      'Impact Score',
+      'Current Spend',
+      hasOptimized ? 'Optimized Spend' : 'ATC',
+      ...(hasOptimized ? ['Status', 'Change %'] : [])
+    ]
+
+    const rows = regionChannels.map((channel) => {
+      const c = channel as OptimizedChannel
+      const baseRow = [
+        c.Channel,
+        c.Region,
+        c.Genre,
+        c.ReachPct.toFixed(1),
+        c.ImpactScore.toString(),
+        c.Spend.toString(),
+        hasOptimized 
+          ? (c.newSpend || c.Spend).toString()
+          : c.ATC.toString(),
+      ]
+
+      if (hasOptimized) {
+        baseRow.push(
+          c.status || 'MAINTAIN',
+          c.spendChange !== undefined ? c.spendChange.toFixed(1) : '0'
+        )
+      }
+
+      return baseRow
+    })
+
+    // Convert to CSV string
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n')
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    
+    link.setAttribute('href', url)
+    link.setAttribute('download', `TV_Channels_${selectedTVRegion}_${hasOptimized ? 'Optimized' : 'Baseline'}_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="space-y-4">
       {!hasOptimized && (
@@ -145,7 +204,10 @@ export default function TVTab({
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-slate-800">{selectedTVRegion} Channels</h3>
-          <button className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded text-[10px] font-medium">
+          <button 
+            onClick={exportToCSV}
+            className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white rounded text-[10px] font-medium transition-colors"
+          >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
