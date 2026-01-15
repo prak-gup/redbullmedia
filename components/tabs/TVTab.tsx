@@ -27,6 +27,11 @@ export default function TVTab({
   }, [selectedTVRegion, optimizedMetrics])
 
   const exportToCSV = () => {
+    // Get all channels from all regions, not just selected region
+    const allChannels = hasOptimized && optimizedMetrics
+      ? optimizedMetrics.channels
+      : TV_CHANNEL_DATA
+
     // Prepare CSV data
     const headers = [
       'Channel',
@@ -39,7 +44,7 @@ export default function TVTab({
       ...(hasOptimized ? ['Status', 'Change %'] : [])
     ]
 
-    const rows = regionChannels.map((channel) => {
+    const rows = allChannels.map((channel) => {
       const c = channel as OptimizedChannel
       const baseRow = [
         c.Channel,
@@ -63,6 +68,13 @@ export default function TVTab({
       return baseRow
     })
 
+    // Sort by Region, then by Channel name for better organization
+    rows.sort((a, b) => {
+      const regionCompare = a[1].localeCompare(b[1]) // Region is index 1
+      if (regionCompare !== 0) return regionCompare
+      return a[0].localeCompare(b[0]) // Channel is index 0
+    })
+
     // Convert to CSV string
     const csvContent = [
       headers.join(','),
@@ -75,7 +87,7 @@ export default function TVTab({
     const url = URL.createObjectURL(blob)
     
     link.setAttribute('href', url)
-    link.setAttribute('download', `TV_Channels_${selectedTVRegion}_${hasOptimized ? 'Optimized' : 'Baseline'}_${new Date().toISOString().split('T')[0]}.csv`)
+    link.setAttribute('download', `TV_Channels_All_Markets_${hasOptimized ? 'Optimized' : 'Baseline'}_${new Date().toISOString().split('T')[0]}.csv`)
     link.style.visibility = 'hidden'
     
     document.body.appendChild(link)
