@@ -9,6 +9,7 @@ import DigitalTab from '@/components/tabs/DigitalTab'
 import TVTab from '@/components/tabs/TVTab'
 import OptimalPlanTab from '@/components/tabs/OptimalPlanTab'
 import PlanComparisonTab from '@/components/tabs/PlanComparisonTab'
+import CampaignPlanTab from '@/components/tabs/CampaignPlanTab'
 
 export default function Home() {
   // Optimal Plan Defaults: 5.28 Cr total, 81:19 YouTube/JHS, 15% intensity, 70% threshold
@@ -70,7 +71,7 @@ export default function Home() {
                 { id: 'digital' as TabId, label: '🌐 Digital' },
                 { id: 'tv' as TabId, label: '📺 TV' },
                 { id: 'optimal' as TabId, label: '🎯 Optimal Plan' },
-                { id: 'comparison' as TabId, label: '📋 Plan Comparison' },
+                { id: 'campaignplan' as TabId, label: '📊 Campaign Plan' },
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -85,16 +86,18 @@ export default function Home() {
             </div>
           </div>
           
-          <button
-            onClick={() => setHasOptimized(!hasOptimized)}
-            className={`w-full px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all shadow active:opacity-90 sm:w-auto sm:text-xs ${
-              hasOptimized
-                ? 'bg-slate-600 active:bg-slate-700 sm:hover:bg-slate-700'
-                : 'bg-gradient-to-r from-orange-500 to-orange-600 active:from-orange-600 active:to-orange-700 sm:hover:from-orange-600 sm:hover:to-orange-700'
-            }`}
-          >
-            {hasOptimized ? '↺ Reset' : '⚡ Run Optimization'}
-          </button>
+          {activeTab !== 'campaignplan' && (
+            <button
+              onClick={() => setHasOptimized(!hasOptimized)}
+              className={`w-full px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all shadow active:opacity-90 sm:w-auto sm:text-xs ${
+                hasOptimized
+                  ? 'bg-slate-600 active:bg-slate-700 sm:hover:bg-slate-700'
+                  : 'bg-gradient-to-r from-orange-500 to-orange-600 active:from-orange-600 active:to-orange-700 sm:hover:from-orange-600 sm:hover:to-orange-700'
+              }`}
+            >
+              {hasOptimized ? '↺ Reset' : '⚡ Run Optimization'}
+            </button>
+          )}
         </div>
         
         {/* Tab Content */}
@@ -146,8 +149,8 @@ export default function Home() {
           />
         )}
         
-        {activeTab === 'comparison' && (
-          <PlanComparisonTab
+        {activeTab === 'campaignplan' && (
+          <CampaignPlanTab
             baselineMetrics={baselineMetrics}
           />
         )}
